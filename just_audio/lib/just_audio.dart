@@ -1251,24 +1251,30 @@ class AudioPlayer {
       if (_disposed) return _platform;
       // During initialisation, we must only use this platform reference in case
       // _platform is updated again during initialisation.
-      final platform = active
-          ? await (_nativePlatform =
-              JustAudioPlatform.instance.init(InitRequest(
+      var platform;
+      if (_nativePlatform != null){
+        platform = active ? await _nativePlatform : (_idlePlatform =
+            _IdleAudioPlayer(id: _id, sequenceStream: sequenceStream));
+      }else{
+        platform = active
+            ? await (_nativePlatform =
+            JustAudioPlatform.instance.init(InitRequest(
               id: _id,
               audioLoadConfiguration: _audioLoadConfiguration?._toMessage(),
               androidAudioEffects: (_isAndroid() || _isUnitTest())
                   ? _audioPipeline.androidAudioEffects
-                      .map((audioEffect) => audioEffect._toMessage())
-                      .toList()
+                  .map((audioEffect) => audioEffect._toMessage())
+                  .toList()
                   : [],
               darwinAudioEffects: (_isDarwin() || _isUnitTest())
                   ? _audioPipeline.darwinAudioEffects
-                      .map((audioEffect) => audioEffect._toMessage())
-                      .toList()
+                  .map((audioEffect) => audioEffect._toMessage())
+                  .toList()
                   : [],
             )))
-          : (_idlePlatform =
-              _IdleAudioPlayer(id: _id, sequenceStream: sequenceStream));
+            : (_idlePlatform =
+            _IdleAudioPlayer(id: _id, sequenceStream: sequenceStream));
+      }
       if (checkInterruption()) return platform;
 
       _platformValue = platform;
